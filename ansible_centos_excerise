@@ -1,0 +1,57 @@
+---
+- hosts: all
+  become: yes
+  vars:
+    package_name: httpd
+    php_modulues_package:
+      - php
+      - php-mysql
+      - php-cli
+      - php-common
+      - php-dba
+      - php-devel
+      - php-embedded
+      - php-enchant
+      - php-fpm
+      - php-gd
+  tasks:
+    - name: fail playbook on unsupported platform
+      fail:
+        msg: 'this playbook is currently developed only for centos'
+      when: ansible_distribution != "CentOS"
+    - name: update and install apache2
+      yum:
+        name: "{{ package_name }}"
+        update_cache: yes
+        state: present
+      notify:
+        - enable and restart apache
+        - installed apache
+    - name: install php_modules
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ php_modulues_package }}"
+      notify:
+        - installed php_modules
+        - enable and restart apache
+  handlers:
+    - name: enable and restart apache
+      service:
+        name: "{{ package_name }}"
+        enabled: yes
+        state: started
+    - name: installed apache
+      debug:
+        msg: "{{ package_name }} is installed"
+    - name: installed php_moduless
+      debug:
+        msg: "php modules are installed success"
+    - name: copy the PHP file to Centos server
+      copy:
+        src: info.php
+        dest: /var/www/html/info.php
+        
+        
+        
+        
